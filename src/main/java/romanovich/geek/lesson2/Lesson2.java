@@ -1,13 +1,12 @@
-package romanovich.geek.lesson1;
+package romanovich.geek.lesson2;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Lesson1 {
+public class Lesson2 {
 
-    private static final int NOTEBOOKS_COUNT = 100;
+    private static final int NOTEBOOKS_COUNT = 10000;
 
     public static void main(String[] args) {
 
@@ -16,17 +15,9 @@ public class Lesson1 {
 
         long timeStart = System.currentTimeMillis();
 
-//        способ 1 - сортировка выбором
         notebooks = SelectionSort.sort(notebooks);
 
-//        способ 2 - сортировка компаратором
-//        SortNotebooksSelection.sortLight(notebooks);
-
-/*        способ 3 - сортировка быстрая
-        SortNotebooksQuick.quickSort(notebooks);*/
-
         long timeEnd = System.currentTimeMillis();
-
 
         displayNotebooks(notebooks);
         System.out.printf("Прошло времени: %dms", timeEnd - timeStart);
@@ -51,7 +42,7 @@ public class Lesson1 {
 
     private static NoteBook createNoteBook() {
         Random random = new Random();
-        int price = random.nextInt(26) * 100 + 500;
+        int price = random.nextInt(31) * 50 + 500;
         int ramValue = (random.nextInt(6) + 1) * 4;
         int manufacturersCount = Manufacturer.values().length;
         Manufacturer manufacturer = Manufacturer.values()[random.nextInt(manufacturersCount)];

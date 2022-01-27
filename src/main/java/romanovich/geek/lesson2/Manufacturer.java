@@ -1,4 +1,4 @@
-package romanovich.geek.lesson1;
+package romanovich.geek.lesson2;
 
 public enum Manufacturer {
     XAMIOU, ESER, MACNOTE, ASOS, LENUVO
