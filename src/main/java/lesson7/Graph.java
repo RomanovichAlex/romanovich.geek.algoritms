@@ -1,132 +1,134 @@
 package lesson7;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
-public class Graph<T> {
-    private final int MAX_VERTICES;
-    private List<Vertex> vertices;
-    private int[][] adjMatrix;
+public class Graph {
+    private final int INFINITY = 100000000; // это число у нас будет служить в качестве "бесконечности"
+    private final Vertex[] vertexList; // список вершин
+    private final int[][] relationMatrix; // матрица связей вершин
+    private int countOfVertices; // текущее количество вершин
+    private int countOfVertexInTree; // количество рассмотренных вершин в дереве
+    private List<Path> shortestPaths; // список данных кратчайших путей
+    private int currentVertex; // текущая вершина
+    private int startToCurrent; //расстояние до currentVertex
 
-    public int getSize() {
-        return MAX_VERTICES;
-    }
-
-    public Graph(int size) {
-        MAX_VERTICES = size;
-        vertices = new LinkedList<>();
-        adjMatrix = new int[MAX_VERTICES][MAX_VERTICES];
-    }
-
-    public void addVertex(T label) {
-        if (vertices.size() > MAX_VERTICES)
-            throw new IndexOutOfBoundsException("Max vertices is " + MAX_VERTICES);
-        vertices.add(new Vertex<>(label));
-    }
-
-    public Vertex getVertex(int i) {
-        return vertices.get(i);
-    }
-
-    public void addAdjacency(int start, int end) {
-        adjMatrix[start][end] = 1;
-        adjMatrix[end][start] = 1;
-    }
-
-    public void displayVertex(int index) {
-        System.out.println(vertices.get(index));
-    }
-
-    private int getUnvisitedNeighbor(Vertex vertex) {
-        for (int i = 0; i < vertices.size(); i++) {
-            if (adjMatrix[vertices.indexOf(vertex)][i] == 1 &&
-                    !vertices.get(i).isVisited()) {
-                return i;
+    public Graph() {
+        // максимальное количество вершин
+        int MavVerts = 10;
+        vertexList = new Vertex[MavVerts]; // матрица смежности
+        relationMatrix = new int[MavVerts][MavVerts];
+        countOfVertices = 0;
+        countOfVertexInTree = 0;
+        for (int i = 0; i < MavVerts; i++) {// матрица смежности заполняется
+            for (int k = 0; k < MavVerts; k++) { // бесконечными расстояниями
+                relationMatrix[i][k] = INFINITY; // задания значений по умолчанию
+                shortestPaths = new ArrayList<>();// задается пустым
             }
         }
-        return -1;
     }
 
-    private int getPrevious(Vertex vertex) {
-        for (int i = 0; i < vertices.size(); i++) {
-            if (adjMatrix[vertices.indexOf(vertex)][i] == 1) {
-                if (vertex.getWeight() - vertices.get(i).getWeight() == 1) {
-                    return i;
-                }
-            }
+    public void addVertex(String lab) {// задание новых вершин
+        vertexList[countOfVertices++] = new Vertex(lab);
+    }
+
+    public void addEdge(int start, int end, int weight) {
+        relationMatrix[start][end] = weight; // задание ребер между вершинами, с весом между ними
+    }
+
+    public void path() { // выбор кратчайшего пути
+        //  задание данных для стартовой вершины
+        int startTree = 0; // стартуем с вершины 0
+        vertexList[startTree].setInTree(true); // включение в состав дерева первого элемента
+        countOfVertexInTree = 1;
+
+        // заполнение коротких путей для вершин смежных со стартовой
+        for (int i = 0; i < countOfVertices; i++) {
+            int tempDist = relationMatrix[startTree][i];
+            Path path = new Path(tempDist);
+            path.getParentVertices().add(0);// первым родительским элементом, будет всегда стартовая вершина
+            shortestPaths.add(path);
         }
-        return -1;
-    }
+        // пока все вершины не окажутся в дереве
+        while (countOfVertexInTree < countOfVertices) { // выполняем, пока количество вершин в дереве не сравняется с общим количеством вершин
+            int indexMin = getMin();//получаем индекс вершины с наименьшей дистанцией, из вершин еще не входящих в дерево
+            int minDist = shortestPaths.get(indexMin).getDistance();// минимальная дистанция вершины, из тек которые ещё не в дереве
 
-    public void depthTravers() {
-        System.out.println("depthTravers:");
-        LinkedList<Vertex> stack = new LinkedList<>();
-        vertices.get(0).setVisited(true);
-        displayVertex(0);
-        stack.push(vertices.get(0));
-        while (!stack.isEmpty()) {
-            int v = getUnvisitedNeighbor(stack.peek());
-            if (v == -1) {
-                stack.pop();
+            if (minDist == INFINITY) {
+                System.out.println("В графе присутствуют недостижимые вершины");
+                break;// в случае если остались не пройденными только недостижимые вершины, мы выходим из цикла
             } else {
-                vertices.get(v).setVisited(true);
-                displayVertex(v);
-                stack.push(vertices.get(v));
+                currentVertex = indexMin; // переводим указатель currentVert к текущей вершине
+                startToCurrent = shortestPaths.get(indexMin).getDistance();// задаем дистанцию к текущей вершине
             }
+
+            vertexList[currentVertex].setInTree(true);  //включение текущей вершины в дерево
+            countOfVertexInTree++; // увеличиваем счетчик вершин в дереве
+            updateShortestPaths(); // обновление списка кратчайших путей
         }
-        refreshFlags();
+
+        displayPaths(); // выводим в консоль результаты
     }
 
-    public int widthTravers(boolean printable, Vertex target) {
-        if (printable) System.out.println("widthTravers:");
-        LinkedList<Vertex> queue = new LinkedList<>();
-        vertices.get(0).setVisited(true);
-        queue.add(vertices.get(0));
-        int next;
-        int weight = 0;
-        vertices.get(0).setWeight(weight);
-        if (printable) displayVertex(0);
-        while (!queue.isEmpty()) {
-            Vertex current = queue.remove();
-            while ((next = getUnvisitedNeighbor(current)) != -1) {
-
-                vertices.get(next).setWeight(current.getWeight() + 1);
-                if (vertices.get(next) == target) return next;
-
-
-                vertices.get(next).setVisited(true);
-                if (printable) displayVertex(next);
-                queue.add(vertices.get(next));
-            }
+    public void clean() { // очистка дерева
+        countOfVertexInTree = 0;
+        for (int i = 0; i < countOfVertices; i++) {
+            vertexList[i].setInTree(false);
         }
-        refreshFlags();
-        return -1;
     }
 
-    public List<Vertex> getWay(Vertex target) {
-        System.out.println("getWay:");
-        if (vertices.get(0) == target) {
-            System.out.println(target);
-            return null;
-        }
-        LinkedList<Vertex> result = new LinkedList<>();
-        int current;
-        if ((current = widthTravers(false, target)) >= 0) {
-            int previous;
-            while ((previous = getPrevious(vertices.get(current))) != -1) {
-                current = previous;
-                result.push(vertices.get(current));
+    private int getMin() {
+        int minDist = INFINITY; // за точку старта взята "бесконечная" длина
+        int indexMin = 0;
+        for (int i = 1; i < countOfVertices; i++) {// для каждой вершины
+            if (!vertexList[i].isInTree() && shortestPaths.get(i).getDistance() < minDist) { // если вершина ещё не в дереве и её расстояние меньше старого минимума
+                minDist = shortestPaths.get(i).getDistance(); // задаётся новый минимум
+                indexMin = i; // обновление индекса вершины содержащую минимальную дистанцию
             }
-        } else {
-            System.out.println("There is no way!");
-            return null;
         }
-        return result;
+        return indexMin; //возвращает индекс вершины с наименьшей дистанцией, из вершин еще не входящих в дерево
     }
 
-    private void refreshFlags() {
-        for (int i = 0; i < vertices.size(); i++) {
-            vertices.get(i).setVisited(false);
+    private void updateShortestPaths() {
+        int vertexIndex = 1; // стартовая вершина пропускается
+        while (vertexIndex < countOfVertices) { // перебор столбцов
+
+            if (vertexList[vertexIndex].isInTree()) { // если вершина column уже включена в дерево, она пропускается
+                vertexIndex++;
+                continue;
+            }
+            // вычисление расстояния для одного элемента sPath
+            // получение ребра от currentVert к column
+            int currentToFringe = relationMatrix[currentVertex][vertexIndex];
+            // суммирование всех расстояний
+            int startToFringe = startToCurrent + currentToFringe;
+            // определение расстояния текущего элемента vertexIndex
+            int shortPathDistance = shortestPaths.get(vertexIndex).getDistance();
+
+            // сравнение расстояния через currentVertex с текущим расстоянием в вершине с индексом vertexIndex
+            if (startToFringe < shortPathDistance) {// если меньше, то у вершины под индексом vertexIndex будет задан новый кратчайший путь
+                List<Integer> newParents = new ArrayList<>(shortestPaths.get(currentVertex).getParentVertices());//создаём копию списка родителей вершины currentVert
+                newParents.add(currentVertex);// задаём в него и currentVertex как предыдущий
+                shortestPaths.get(vertexIndex).setParentVertices(newParents); // сохраняем новый маршрут
+                shortestPaths.get(vertexIndex).setDistance(startToFringe); // сохраняем новую дистанцию
+            }
+            vertexIndex++;
+        }
+    }
+
+    private void displayPaths() { // метод для вывода кратчайших путей на экран
+        for (int i = 0; i < countOfVertices; i++) {
+            System.out.print(vertexList[i].getLabel() + " = ");
+            if (shortestPaths.get(i).getDistance() == INFINITY) {
+                System.out.println("0");
+            } else {
+                StringBuilder result = new StringBuilder(shortestPaths.get(i).getDistance() + " (");
+                List<Integer> parents = shortestPaths.get(i).getParentVertices();
+                for (Integer parent : parents) {
+                    result.append(vertexList[parent].getLabel()).append(" -> ");
+                }
+                System.out.println(result + vertexList[i].getLabel() + ")");
+            }
         }
     }
 }

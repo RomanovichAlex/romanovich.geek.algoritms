@@ -1,18 +1,28 @@
 package lesson7;
 
 
-import lombok.Data;
+public class Vertex {
+    private String label;
+    private boolean isInTree;
 
-@Data
-    public class Vertex<T> {
-        private T payload;
-        private boolean visited;
-        private int weight;
-
-        public Vertex(T payload) {
-            this.payload = payload;
-            this.visited = false;
-            this.weight = -1;
-        }
+    public Vertex(String label) {
+        this.label = label;
+        this.isInTree = false;
     }
 
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public boolean isInTree() {
+        return isInTree;
+    }
+
+    public void setInTree(boolean inTree) {
+        isInTree = inTree;
+    }
+}
