@@ -11,7 +11,7 @@ public class TreeGen  {
     }
 
     public void genTrees(int level, int trees, int min, int max) {
-        if (min > max) { //небольшая защита от ошибок пользователя
+        if (min > max) {
             int temp = min;
             min = max;
             max = temp;
